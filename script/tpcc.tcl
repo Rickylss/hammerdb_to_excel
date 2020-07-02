@@ -24,11 +24,18 @@ proc runtimer {seconds} {
 
 # start autopilot 
 proc autopilot { vu_list } {
+  global db_type
   puts "-------------SETTING CONFIGURATION----------------"
-  dbset db ora
+  dbset db $db_type
   dbset bm TPC-C
-  diset tpcc ora_driver timed
-  diset tpcc timeprofile true
+  set rest ""
+  diset tpcc [append rest $db_type "_driver"] timed
+  if {[compare $db_type "ora"] != 0} {
+    set rest ""
+    diset tpcc [append rest $db_type "_timeprofile"] true
+  } else {
+    diset tpcc timeprofile true
+  }
   loadscript
 
   puts "------------------SEQUENCE STARTED-----------------"
@@ -145,6 +152,9 @@ proc entry { iterat_times file_name vu_list} {
 #-------------------------------------------------------------------
 puts "*************************start**************************"
 
+#set db_type mssqls
+set db_type mysql
+#set db_type ora
 set vu_list {1 2 4 8 16 32 64 128 256 512}
 set iterat_times 1
 set excel_file_name "test"
