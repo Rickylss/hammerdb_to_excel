@@ -54,7 +54,7 @@ proc autopilot { vu_list } {
 
 #---------------------Export the data to Excel----------------------
 
-proc export_data { log_fd row} {
+proc export_data {log_fd row} {
 
   global tpm_base
   global nopm_base
@@ -83,35 +83,13 @@ proc export_data { log_fd row} {
   }
 }
 
-#-----------------------------entry---------------------------------
-
-proc entry { iterat_times file_name vu_list} {
-
-  global tpm_base
-  global nopm_base
-  global index_map
-  global excel_arr
-
-  set hammerdb_file ""
-  set excel_fd [open [file join [pwd] [append file_name ".xls"]] w]
-  set row 0
-
-  # get the path of hammerdb.log file
-  switch -regexp $::tcl_platform(os) {
-    (Windows.NT) {
-      set hammerdb_file C:/hammerdb.log
-    }
-    (Linux) {
-      set hammerdb_file /tmp/hammerdb.log
-    }
-    default {
-      puts "can not find hammerdb.log in platform $tcl_platform(os)"
-      exit 0
-    }
-  }
-
+proc init_excel { iterat_times file_name } {
   # init Excel file
+  set excel_fd [open [file join [pwd] [append file_name ".xls"]] w]
   append excel_arr [store_bof]
+
+  append excel_arr [store_value $tpm_base 0 "tpm"]
+  append excel_arr [store_value $tpm_base 0 "nopm"]
 
   foreach x $vu_list {
     incr index
@@ -125,11 +103,8 @@ proc entry { iterat_times file_name vu_list} {
 
     append excel_arr [store_value [expr $i + $tpm_base] 0 "test_$i"]
     append excel_arr [store_value [expr $i + $nopm_base] 0 "test_$i"]
-    # start test and log file to hammerdb.log
-    autopilot $vu_list
 
-    if {[file exists $hammerdb_file]} {
-      file rename $hammerdb_file $i
+    if {[file exists $i]} {
       set log_fd [open $i r]
     } else {
       puts "could no find $hammerdb_file"
@@ -149,6 +124,49 @@ proc entry { iterat_times file_name vu_list} {
   close $excel_fd
 }
 
+#-----------------------------entry---------------------------------
+
+proc entry { iterat_times file_name vu_list} {
+
+  global tpm_base
+  global nopm_base
+  global index_map
+  global excel_arr
+
+  set hammerdb_file ""
+  set row 0
+
+  # get the path of hammerdb.log file
+  switch -regexp $::tcl_platform(os) {
+    (Windows.NT) {
+      set hammerdb_file C:/hammerdb.log
+    }
+    (Linux) {
+      set hammerdb_file /tmp/hammerdb.log
+    }
+    default {
+      puts "can not find hammerdb.log in platform $tcl_platform(os)"
+      exit 0
+    }
+  }
+
+  # backup hammerdb.log file 
+  for {set i 1} {$i <= $iterat_times} {incr i} {
+
+    # start test and log file to hammerdb.log
+    autopilot $vu_list
+
+    if {[file exists $hammerdb_file]} {
+      file rename $hammerdb_file $i
+    } else {
+      puts "could no find $hammerdb_file"
+      continue
+    }
+  }
+
+  init_excel $iterat_times $file_name
+}
+
 #-------------------------------------------------------------------
 puts "*************************start**************************"
 
@@ -157,7 +175,8 @@ set db_type mysql
 #set db_type ora
 set vu_list {1 2 4 8 16 32 64 128 256 512}
 set iterat_times 1
-set excel_file_name "test"
+set clock [clock format [clock seconds] -format %m-%d-%H%M%S]
+set excel_file_name "test_$clock"
 set index_map(0) "None"
 set excel_arr {}
 
