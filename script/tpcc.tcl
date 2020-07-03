@@ -94,7 +94,7 @@ proc export_data {log_fd row} {
   }
 }
 
-proc init_excel { iterat_times file_name } {
+proc init_excel { iterat_times file_name vu_list} {
   global tpm_base
   global nopm_base
   global response_time_base
@@ -179,7 +179,7 @@ proc entry { iterat_times file_name vu_list} {
     }
   }
 
-  init_excel $iterat_times $file_name
+  init_excel $iterat_times $file_name $vu_list
 }
 
 #-------------------------------------------------------------------
