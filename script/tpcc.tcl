@@ -58,6 +58,7 @@ proc export_data {log_fd row} {
 
   global tpm_base
   global nopm_base
+  global response_time_base
   global index_map
   global excel_arr
 
@@ -80,21 +81,39 @@ proc export_data {log_fd row} {
         continue
       }
     }
+
+    while { [gets $log_fd data] >= 0} {
+      if {[regexp {([a-z]*)\s\S\s(\d*)\S(\d{2,}.\d{2,}%)\S\s(\d*)\S\s(\d*)\S\s(\d*)\S} $data sub0 procname exclusivetot per callnum avgpercall cumultot]} {
+        # set response time $sub1
+        append excel_arr [store_value [expr $row + $response_time_base] $col $avgpercall]
+        break
+      } else {
+        continue
+      }
+    }
   }
 }
 
 proc init_excel { iterat_times file_name } {
+  global tpm_base
+  global nopm_base
+  global response_time_base
+  global index_map
+  global excel_arr
+
   # init Excel file
   set excel_fd [open [file join [pwd] [append file_name ".xls"]] w]
   append excel_arr [store_bof]
 
   append excel_arr [store_value $tpm_base 0 "tpm"]
   append excel_arr [store_value $tpm_base 0 "nopm"]
+  append excel_arr [store_value $response_time_base 0 "response time"]
 
   foreach x $vu_list {
     incr index
     append excel_arr [store_value $tpm_base $index $x]
     append excel_arr [store_value $nopm_base $index $x]
+    append excel_arr [store_value $response_time_base $index $x]
     # create an index map
     set index_map($x) $index
   }
@@ -103,6 +122,7 @@ proc init_excel { iterat_times file_name } {
 
     append excel_arr [store_value [expr $i + $tpm_base] 0 "test_$i"]
     append excel_arr [store_value [expr $i + $nopm_base] 0 "test_$i"]
+    append excel_arr [store_value [expr $i + $response_time_base] 0 "test_$i"]
 
     if {[file exists $i]} {
       set log_fd [open $i r]
@@ -127,11 +147,6 @@ proc init_excel { iterat_times file_name } {
 #-----------------------------entry---------------------------------
 
 proc entry { iterat_times file_name vu_list} {
-
-  global tpm_base
-  global nopm_base
-  global index_map
-  global excel_arr
 
   set hammerdb_file ""
   set row 0
@@ -183,6 +198,7 @@ set excel_arr {}
 set offset 3
 set tpm_base 0
 set nopm_base [expr $tpm_base + $iterat_times + 1 + $offset]
+set response_time_base [expr $nopm_base + $iterat_times + 1 + $offset]
 
 entry $iterat_times $excel_file_name $vu_list
 
