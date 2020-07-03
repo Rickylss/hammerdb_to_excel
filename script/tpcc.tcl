@@ -30,7 +30,7 @@ proc autopilot { vu_list } {
   dbset bm TPC-C
   set rest ""
   diset tpcc [append rest $db_type "_driver"] timed
-  if {[compare $db_type "ora"] != 0} {
+  if {[string compare $db_type "ora"] != 0} {
     set rest ""
     diset tpcc [append rest $db_type "_timeprofile"] true
   } else {
