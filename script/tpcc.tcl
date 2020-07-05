@@ -106,7 +106,7 @@ proc init_excel { iterat_times file_name vu_list} {
   append excel_arr [store_bof]
 
   append excel_arr [store_value $tpm_base 0 "tpm"]
-  append excel_arr [store_value $tpm_base 0 "nopm"]
+  append excel_arr [store_value $nopm_base 0 "nopm"]
   append excel_arr [store_value $response_time_base 0 "response time"]
 
   foreach x $vu_list {
